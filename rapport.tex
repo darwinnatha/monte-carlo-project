@@ -1,0 +1,110 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0.0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\title{\textbf{Rapport de Projet GPGPU : Méthodes de Monte-Carlo sur GPU (Version Allégée)}\\ \Large Master DSAD \& IA --- IUT de Douala}
+\author{\textbf{Groupe :} [NOMS ET PRÉNOMS DES MEMBRES]}
+\date{Date de remise : 10 Octobre 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Ce projet présente l'implémentation et la parallélisation GPU d'algorithmes de Monte-Carlo pour l'estimation de \(\pi\), la valorisation d'options financières européennes sous le modèle de Black-Scholes et l'échantillonnage par chaîne de Markov (Metropolis-Hastings). La logique des noyaux a été développée et validée localement sur simulateur Numba-CUDA avant d'être portée sur GPU physique via Google Colab.
+\end{abstract}
+
+\section{Introduction et Contexte Mathématique}
+Les méthodes de Monte-Carlo s'appuient sur la Loi des Grands Nombres pour approximer des espérances mathématiques par des moyennes empiriques.
+
+\subsection{Convergence et Erreur Statistique}
+Soit \(X_1, X_2, \dots, X_N\) des variables aléatoires indépendantes et identiquement distribuées. L'estimateur de Monte-Carlo est :
+\begin{equation}
+\bar{X}_N = \frac{1}{N} \sum_{i=1}^{N} X_i \xrightarrow[N \to \infty]{\text{p.s.}} \mathbb{E}[X]
+\end{equation}
+D'après le Théorème Central Limite, l'erreur statistique décroît selon \(\mathcal{O}\left(\frac{1}{\sqrt{N}}\right)\).
+
+\subsection{Modèle de Black-Scholes}
+Le prix d'un actif financier \(S_t\) suit un Mouvement Brownien Géométrique :
+\begin{equation}
+dS_t = r S_t dt + \sigma S_t dW_t
+\end{equation}
+La valeur exacte à maturité \(T\) pour un facteur d'incertitude \(Z \sim \mathcal{N}(0, 1)\) est :
+\begin{equation}
+S_T = S_0 \exp\left( \left(r - \frac{\sigma^2}{2}\right)T + \sigma\sqrt{T}Z \right)
+\end{equation}
+La formule fermée analytique d'un Call européen sert de référence pour la validation numérique :
+\begin{equation}
+C = S_0 \Phi(d_1) - K e^{-rT} \Phi(d_2)
+\end{equation}
+où \(d_1 = \frac{\ln(S_0/K) + (r + \sigma^2/2)T}{\sigma\sqrt{T}}\) et \(d_2 = d_1 - \sigma\sqrt{T}\).
+
+\section{Architecture GPU Visée et Simulation Numba-CUDA}
+L'architecture cible est basée sur le modèle SIMT (Single Instruction, Multiple Threads) des GPU NVIDIA. 
+
+\subsection{Distribution de la Charge}
+Chaque thread GPU exécute une boucle locale simulant \(N_{\text{thread}}\) trajectoires indépendantes en utilisant le générateur pseudo-aléatoire \texttt{xoroshiro128p\_normal\_float64}.
+\begin{equation}
+N_{\text{total}} = \text{Grille} \times \text{Blocs} \times N_{\text{thread}}
+\end{equation}
+
+\section{Validation Numérique et Résultats}
+Les implémentations CPU (NumPy) et GPU (Numba-CUDA Simulé) ont été comparées.
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Tirages (\(N\))} & \textbf{Prix MC CPU (€)} & \textbf{Prix MC GPU (€)} & \textbf{Écart / Exact (€)} \\ \hline
+\(10^3\) & ... & ... & ... \\ \hline
+\(10^5\) & ... & ... & ... \\ \hline
+\(10^6\) & ... & ... & ... \\ \hline
+\end{tabular}
+\caption{Validation de la convergence vers la solution analytique de Black-Scholes.}
+\end{table}
+
+\section{Étape Finale : Exécution sur GPU Réel (Colab / Kaggle)}
+\textit{[Présenter ici la mesure du speedup, la mémoire consommée et le nombre de simulations par seconde sur GPU T4/P100 réel.]}
+
+\section{Conclusion}
+Les méthodes de Monte-Carlo sont naturellement adaptées à la parallélisation massive sur GPU en raison de l'absence de dépendance mémoire entre les tirages.
+
+\begin{thebibliography}{9}
+\bibitem{black1973} Black, F., \& Scholes, M. (1973). The Pricing of Options and Corporate Liabilities. \textit{Journal of Political Economy}.
+\bibitem{numba} Numba CUDA Documentation, \url{https://numba.readthedocs.io/}
+\end{thebibliography}
+
+\end{document}
