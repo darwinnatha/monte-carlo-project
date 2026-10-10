@@ -37,7 +37,7 @@
 \lstset{style=mystyle}
 
 \title{\textbf{Rapport de Projet GPGPU : Méthodes de Monte-Carlo sur GPU (Version Allégée)}\\ \Large Master DSAD \& IA --- IUT de Douala}
-\author{\textbf{Groupe :} [NOMS ET PRÉNOMS DES MEMBRES]}
+\author{\textbf{Membre :} PIEGUE FOTSO DARWIN NATHAN}
 \date{Date de remise : 10 Octobre 2026}
 
 \begin{document}
@@ -83,21 +83,37 @@ N_{\text{total}} = \text{Grille} \times \text{Blocs} \times N_{\text{thread}}
 \end{equation}
 
 \section{Validation Numérique et Résultats}
-Les implémentations CPU (NumPy) et GPU (Numba-CUDA Simulé) ont été comparées.
+Les implémentations CPU (NumPy) et GPU (Numba-CUDA Simulé) ont été comparées par rapport à la solution analytique exacte de Black-Scholes (Prix exact : $10.4506$ €).
+
 \begin{table}[h!]
 \centering
 \begin{tabular}{|c|c|c|c|}
 \hline
-\textbf{Tirages (\(N\))} & \textbf{Prix MC CPU (€)} & \textbf{Prix MC GPU (€)} & \textbf{Écart / Exact (€)} \\ \hline
-\(10^3\) & ... & ... & ... \\ \hline
-\(10^5\) & ... & ... & ... \\ \hline
-\(10^6\) & ... & ... & ... \\ \hline
+\textbf{Tirages (\(N\))} & \textbf{Prix MC CPU (€)} & \textbf{Prix MC GPU Simulé (€)} & \textbf{Écart / Exact (€)} \\ \hline
+\(10^3\) & 10.7595 & - & 0.3089 \\ \hline
+\(10^5\) & 10.4603 & 10.4502 & 0.0097 \\ \hline
+\(10^6\) & 10.4372 & - & 0.0134 \\ \hline
 \end{tabular}
 \caption{Validation de la convergence vers la solution analytique de Black-Scholes.}
 \end{table}
 
 \section{Étape Finale : Exécution sur GPU Réel (Colab / Kaggle)}
-\textit{[Présenter ici la mesure du speedup, la mémoire consommée et le nombre de simulations par seconde sur GPU T4/P100 réel.]}
+L'étape finale a consisté à porter le code validé en simulateur sur un environnement cloud réel doté d'un accélérateur graphique NVIDIA Tesla T4 (via Google Colab). Les tests ont été menés à grande échelle sur un volume de \(N = 100\,000\,000\) (\(10^8\)) trajectoires de Mouvement Brownien Géométrique.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Métrique} & \textbf{Valeur mesurée (Tesla T4)} \\ \hline
+Nombre de simulations (\(N\)) & \(100\,000\,000\) \\ \hline
+Prix option estimé (€) & 10.4502 \\ \hline
+Temps d'exécution total (s) & 2.8111 \\ \hline
+Débit (Simulations / seconde) & 35.57 Millions \\ \hline
+\end{tabular}
+\caption{Performances et métriques d'exécution sur GPU réel.}
+\end{table}
+
+Les résultats confirment la pertinence de la parallélisation massive : l'absence de dépendance inter-threads permet d'exploiter pleinement les cœurs CUDA de la carte T4, rendant le calcul de 100 millions de scénarios financiers quasi instantané (moins de 3 secondes).
 
 \section{Conclusion}
 Les méthodes de Monte-Carlo sont naturellement adaptées à la parallélisation massive sur GPU en raison de l'absence de dépendance mémoire entre les tirages.
